@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chicken Detection</title>
+</head>
+
+<body>
+
+<h2>Chicken Health Detection</h2>
+
+<input type="file" id="fileInput"><br><br>
+
+<button onclick="openCamera()">Open Camera</button><br><br>
+
+<video id="video" width="300" autoplay style="display:none;"></video><br>
+<button onclick="capture()" style="display:none;" id="captureBtn">Capture</button><br><br>
+
+<button onclick="upload()">Detect</button>
+
+<div id="popup" style="display:none; position:fixed; top:10%; left:20%; background:white; padding:20px; border:1px solid black;">
+    <h3 id="popupText"></h3>
+    <img id="popupImg" width="400"/>
+    <br><br>
+    <button onclick="closePopup()">Close</button>
+</div>
+
+<script>
+
+let capturedImage = null;
+
+function openCamera() {
+    const video = document.getElementById("video");
+    const captureBtn = document.getElementById("captureBtn");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            console.log("Camera started ✅");
+            video.srcObject = stream;
+            video.style.display = "block";
+            captureBtn.style.display = "block";
+        })
+        .catch(err => {
+            console.error("Camera error:", err);
+            alert("Camera Error: " + err.name + " - " + err.message);
+        });
+}
+
+function capture() {
+    const video = document.getElementById("video");
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    canvas.toBlob(blob => {
+        capturedImage = blob;
+        alert("Photo captured!");
+    });
+}
+
+async function upload() {
+    let fileInput = document.getElementById("fileInput").files[0];
+
+    let file = fileInput || capturedImage;
+
+    if (!file) {
+        alert("Please upload or capture an image");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("image", file);
+
+    let res = await fetch("/detect", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    showPopup(data);
+}
+
+function showPopup(data) {
+    document.getElementById("popupText").innerHTML =
+        "Healthy: " + data.healthy + " | Sick: " + data.sick;
+
+    document.getElementById("popupImg").src =
+        data.image + "?t=" + new Date().getTime();
+
+    document.getElementById("popup").style.display = "block";
+}
+
+function closePopup() {
+    document.getElementById("popup").style.display = "none";
+}
+
+</script>
+
+</body>
+</html>
