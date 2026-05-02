@@ -7,7 +7,7 @@ import uuid
 
 app = Flask(__name__)
 
-model = YOLO("runs/detect/train/weights/best.pt")
+model = YOLO("best.pt")
 
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
